@@ -1,6 +1,6 @@
 # 🚛 Fleet Predictive Maintenance Dashboard
 
-**A comprehensive Streamlit + Gradio web application for fleet management and predictive maintenance in logistics and transportation.**
+**A comprehensive Streamlit web application for fleet management and predictive maintenance in logistics and transportation.**
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.31.0-red.svg)
@@ -102,7 +102,6 @@ The app will open in your browser at `http://localhost:8501`
 - **Visualizations:** Plotly 5.18.0
 - **Data Processing:** Pandas 2.1.4, NumPy 1.26.3
 - **ML Model:** Scikit-learn 1.4.0
-- **Interactive ML:** Gradio 4.16.0
 
 ---
 
@@ -899,7 +898,6 @@ pip install -r requirements.txt --upgrade
 
 - [Streamlit Docs](https://docs.streamlit.io)
 - [Plotly Docs](https://plotly.com/python/)
-- [Gradio Docs](https://gradio.app/docs/)
 
 ---
 

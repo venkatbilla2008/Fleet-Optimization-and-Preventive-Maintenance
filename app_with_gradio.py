@@ -184,11 +184,7 @@ def predict_vehicle_maintenance(engine_temp, oil_pressure, battery_voltage,
 
 # Create Gradio interface
 with gr.Blocks(
-    title="🚛 Fleet Predictive Maintenance - ML Predictor",
-    theme=gr.themes.Soft(
-        primary_hue="blue",
-        secondary_hue="gray",
-    )
+    title="🚛 Fleet Predictive Maintenance - ML Predictor"
 ) as demo:
     
     # Header
@@ -374,8 +370,6 @@ with gr.Blocks(
 # Launch the app
 if __name__ == "__main__":
     demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
         share=False,
         show_error=True
     )

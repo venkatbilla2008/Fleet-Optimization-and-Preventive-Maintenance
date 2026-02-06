@@ -1280,17 +1280,13 @@ Model Confidence: {min(95, 70 + (1 - abs(risk_score - 0.5)) * 50):.0f}%
                 [85, 50, 13.0, 3, 80000, 30],     # Healthy vehicle
                 [105, 28, 12.0, 6, 180000, 75],   # Medium risk vehicle
                 [95, 35, 12.6, 5, 150000, 45],    # Low risk vehicle
-            ],
-            theme=gr.themes.Soft(),
-            allow_flagging="never"
+            ]
         )
         
         # Launch Gradio interface embedded in Streamlit
         demo.launch(
             share=False,
             inline=True,
-            server_name="0.0.0.0",
-            server_port=7860,
             show_error=True
         )
     

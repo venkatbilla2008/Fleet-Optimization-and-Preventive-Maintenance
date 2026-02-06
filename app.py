@@ -120,11 +120,29 @@ with st.sidebar:
     
     # Navigation with icons
     st.markdown("### 📍 Navigation")
+    
+    # Initialize session state for page if not exists
+    if 'page' not in st.session_state:
+        st.session_state.page = "🏠 Dashboard"
+    
+    # Page options
+    page_options = ["🏠 Dashboard", "🔮 Predictions", "🚛 Fleet Monitor", "🤖 AI Insights", "🎯 Live Demo"]
+    
+    # Get current page index
+    try:
+        current_index = page_options.index(st.session_state.page)
+    except ValueError:
+        current_index = 0
+    
     page = st.radio(
         "Select Page:",
-        ["🏠 Dashboard", "🔮 Predictions", "🚛 Fleet Monitor", "🤖 AI Insights", "🎯 Live Demo"],
+        page_options,
+        index=current_index,
         label_visibility="collapsed"
     )
+    
+    # Update session state
+    st.session_state.page = page
     
     st.markdown("---")
     
@@ -390,7 +408,11 @@ if page == "🏠 Dashboard":
             st.write(f"Risk: {row['failure_risk_score']:.2f}")
         
         with col4:
-            st.button("View", key=f"view_{idx}", type="secondary")
+            # Working View button - navigates to Fleet Monitor with selected vehicle
+            if st.button("View", key=f"view_{idx}", type="secondary"):
+                st.session_state.selected_vehicle = row['vehicle_id']
+                st.session_state.page = "🚛 Fleet Monitor"
+                st.rerun()
 
 elif page == "🔮 Predictions":
     st.title("🔮 Maintenance Predictions")
@@ -504,12 +526,26 @@ elif page == "🚛 Fleet Monitor":
     st.markdown("### Individual Vehicle Analysis")
     st.markdown("---")
     
+    # Initialize selected vehicle in session state if not exists
+    if 'selected_vehicle' not in st.session_state:
+        st.session_state.selected_vehicle = df['vehicle_id'].tolist()[0]
+    
+    # Get index of selected vehicle
+    vehicle_list = df['vehicle_id'].tolist()
+    try:
+        default_index = vehicle_list.index(st.session_state.selected_vehicle)
+    except ValueError:
+        default_index = 0
+    
     # Vehicle selector
     selected_vehicle = st.selectbox(
         "Select Vehicle",
-        options=df['vehicle_id'].tolist(),
-        index=0
+        options=vehicle_list,
+        index=default_index
     )
+    
+    # Update session state
+    st.session_state.selected_vehicle = selected_vehicle
     
     # Get vehicle data
     vehicle_data = df[df['vehicle_id'] == selected_vehicle].iloc[0]

@@ -55,53 +55,124 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Load sample data
+# Load sample data - SAME AS DATABRICKS NOTEBOOKS
 @st.cache_data
 def load_data():
-    """Load sample fleet data"""
-    np.random.seed(42)
+    """
+    Load fleet data using SAME logic as Databricks notebooks
+    (01_Bronze_Ingestion_IMPROVED.py)
     
-    # Generate sample vehicle data
-    n_vehicles = 500
-    vehicle_ids = [f"VEH-{str(i).zfill(3)}" for i in range(1, n_vehicles + 1)]
+    This ensures uniformity across all project activities:
+    - Data Engineering (Databricks)
+    - Data Science/ML (Databricks)
+    - Visualization (Streamlit)
+    """
+    import random
+    from datetime import datetime, timedelta
     
-    data = {
-        'vehicle_id': vehicle_ids,
-        'vehicle_age_years': np.random.randint(1, 10, n_vehicles),
-        'total_mileage_km': np.random.randint(50000, 300000, n_vehicles),
-        'engine_temp_c': np.random.normal(85, 15, n_vehicles),
-        'oil_pressure_psi': np.random.normal(35, 8, n_vehicles),
-        'battery_voltage': np.random.normal(12.6, 0.8, n_vehicles),
-        'days_since_maintenance': np.random.randint(0, 90, n_vehicles),
-        'failure_risk_score': np.random.beta(2, 5, n_vehicles),
-        'latitude': np.random.uniform(28.4, 28.7, n_vehicles),
-        'longitude': np.random.uniform(77.0, 77.3, n_vehicles),
-    }
+    # Configuration - SAME AS DATABRICKS
+    NUM_VEHICLES = 500
+    START_DATE = datetime(2024, 1, 1)
+    END_DATE = datetime(2024, 1, 30)  # 30 days
     
-    df = pd.DataFrame(data)
+    # Assign each vehicle a health category and degradation rate
+    # SAME 5 CATEGORIES AS DATABRICKS
+    vehicle_health_profiles = {}
+    random.seed(42)  # For reproducibility
     
-    # Calculate maintenance prediction
-    df['will_require_maintenance'] = (df['failure_risk_score'] > 0.5).astype(int)
+    for vehicle_id in range(1, NUM_VEHICLES + 1):
+        # Health score: 0.0 (critical) to 1.0 (excellent)
+        initial_health = random.random()
+        degradation_rate = random.uniform(0.001, 0.005)
+        
+        vehicle_health_profiles[vehicle_id] = {
+            'initial_health': initial_health,
+            'degradation_rate': degradation_rate,
+            'vehicle_id': f"VEH-{vehicle_id:03d}"
+        }
     
-    # Add health status
-    def get_health_status(risk):
-        if risk > 0.8:
-            return 'Critical'
-        elif risk > 0.6:
-            return 'High'
-        elif risk > 0.4:
-            return 'Medium'
+    # Generate aggregated data (simulating Gold layer features)
+    data_records = []
+    
+    for vehicle_id in range(1, NUM_VEHICLES + 1):
+        profile = vehicle_health_profiles[vehicle_id]
+        
+        # Calculate current health after 30 days
+        days_elapsed = 30
+        current_health = profile['initial_health'] - (days_elapsed * profile['degradation_rate'])
+        current_health = max(0.0, min(1.0, current_health))
+        
+        # Generate sensor values based on health score - SAME LOGIC AS DATABRICKS
+        if current_health < 0.15:  # CRITICAL (15%)
+            engine_temp = random.uniform(110, 125)
+            oil_pressure = random.uniform(15, 30)
+            battery_voltage = random.uniform(11.0, 12.0)
+            health_status = 'Critical'
+        elif current_health < 0.35:  # POOR (20%)
+            engine_temp = random.uniform(105, 115)
+            oil_pressure = random.uniform(25, 40)
+            battery_voltage = random.uniform(11.5, 12.5)
+            health_status = 'High'  # Map to High for UI
+        elif current_health < 0.60:  # WARNING (25%)
+            engine_temp = random.uniform(95, 108)
+            oil_pressure = random.uniform(35, 50)
+            battery_voltage = random.uniform(12.0, 13.0)
+            health_status = 'Medium'
+        elif current_health < 0.85:  # GOOD (25%)
+            engine_temp = random.uniform(85, 100)
+            oil_pressure = random.uniform(45, 60)
+            battery_voltage = random.uniform(12.5, 13.5)
+            health_status = 'Low'  # Map to Low risk for UI
+        else:  # EXCELLENT (15%)
+            engine_temp = random.uniform(80, 95)
+            oil_pressure = random.uniform(50, 65)
+            battery_voltage = random.uniform(13.0, 14.0)
+            health_status = 'Low'
+        
+        # Calculate failure risk score (inverse of health)
+        failure_risk_score = 1.0 - current_health
+        
+        # Determine if maintenance is required
+        will_require_maintenance = 1 if failure_risk_score > 0.5 else 0
+        
+        # Vehicle metadata
+        vehicle_age_years = random.randint(1, 10)
+        total_mileage_km = random.randint(50000, 300000)
+        days_since_maintenance = random.randint(0, 90)
+        
+        # GPS location (distributed around Delhi NCR - same as Databricks uses NYC)
+        latitude = 28.4 + random.uniform(0, 0.3)
+        longitude = 77.0 + random.uniform(0, 0.3)
+        
+        # Estimated maintenance cost
+        if will_require_maintenance == 1:
+            # Higher cost for critical vehicles
+            if health_status == 'Critical':
+                estimated_cost = random.randint(1500, 2000)
+            else:
+                estimated_cost = random.randint(500, 1500)
         else:
-            return 'Low'
+            estimated_cost = 0
+        
+        data_records.append({
+            'vehicle_id': profile['vehicle_id'],
+            'vehicle_age_years': vehicle_age_years,
+            'total_mileage_km': total_mileage_km,
+            'engine_temp_c': engine_temp,
+            'oil_pressure_psi': oil_pressure,
+            'battery_voltage': battery_voltage,
+            'days_since_maintenance': days_since_maintenance,
+            'failure_risk_score': failure_risk_score,
+            'latitude': latitude,
+            'longitude': longitude,
+            'will_require_maintenance': will_require_maintenance,
+            'health_status': health_status,
+            'estimated_maintenance_cost': estimated_cost,
+            'initial_health': profile['initial_health'],  # For reference
+            'current_health': current_health  # After degradation
+        })
     
-    df['health_status'] = df['failure_risk_score'].apply(get_health_status)
-    
-    # Add estimated cost
-    df['estimated_maintenance_cost'] = np.where(
-        df['will_require_maintenance'] == 1,
-        np.random.randint(500, 2000, n_vehicles),
-        0
-    )
+    df = pd.DataFrame(data_records)
     
     return df
 

@@ -287,7 +287,7 @@ with st.sidebar:
     csv_data = csv_buffer.getvalue()
     
     st.download_button(
-        label="� Download Fleet Report (CSV)",
+        label="📥 Download Fleet Report (CSV)",
         data=csv_data,
         file_name=f"fleet_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
         mime="text/csv",

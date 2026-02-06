@@ -2,11 +2,11 @@
 🚛 Fleet Predictive Maintenance Dashboard
 ==========================================
 
-A comprehensive Streamlit + Gradio application for fleet management
+A comprehensive Streamlit application for fleet management
 and predictive maintenance in logistics and transportation.
 
 Author: Venkat M
-Date: 2026-02-05
+Date: 2026-02-06
 """
 
 import streamlit as st
@@ -15,8 +15,6 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-import pickle
-import os
 
 # Page configuration
 st.set_page_config(
@@ -56,6 +54,59 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# Load sample data
+@st.cache_data
+def load_data():
+    """Load sample fleet data"""
+    np.random.seed(42)
+    
+    # Generate sample vehicle data
+    n_vehicles = 500
+    vehicle_ids = [f"VEH-{str(i).zfill(3)}" for i in range(1, n_vehicles + 1)]
+    
+    data = {
+        'vehicle_id': vehicle_ids,
+        'vehicle_age_years': np.random.randint(1, 10, n_vehicles),
+        'total_mileage_km': np.random.randint(50000, 300000, n_vehicles),
+        'engine_temp_c': np.random.normal(85, 15, n_vehicles),
+        'oil_pressure_psi': np.random.normal(35, 8, n_vehicles),
+        'battery_voltage': np.random.normal(12.6, 0.8, n_vehicles),
+        'days_since_maintenance': np.random.randint(0, 90, n_vehicles),
+        'failure_risk_score': np.random.beta(2, 5, n_vehicles),
+        'latitude': np.random.uniform(28.4, 28.7, n_vehicles),
+        'longitude': np.random.uniform(77.0, 77.3, n_vehicles),
+    }
+    
+    df = pd.DataFrame(data)
+    
+    # Calculate maintenance prediction
+    df['will_require_maintenance'] = (df['failure_risk_score'] > 0.5).astype(int)
+    
+    # Add health status
+    def get_health_status(risk):
+        if risk > 0.8:
+            return 'Critical'
+        elif risk > 0.6:
+            return 'High'
+        elif risk > 0.4:
+            return 'Medium'
+        else:
+            return 'Low'
+    
+    df['health_status'] = df['failure_risk_score'].apply(get_health_status)
+    
+    # Add estimated cost
+    df['estimated_maintenance_cost'] = np.where(
+        df['will_require_maintenance'] == 1,
+        np.random.randint(500, 2000, n_vehicles),
+        0
+    )
+    
+    return df
+
+# Load data first so it's available everywhere
+df = load_data()
 
 # Sidebar with enhanced business branding
 with st.sidebar:
@@ -140,39 +191,23 @@ with st.sidebar:
     # Quick Actions
     st.markdown("### ⚡ Quick Actions")
     
-    # Export Report Button
-    if st.button("📥 Export Report", width="stretch"):
-        # Generate CSV report
-        import io
-        csv_buffer = io.StringIO()
-        df.to_csv(csv_buffer, index=False)
-        csv_data = csv_buffer.getvalue()
-        
-        st.download_button(
-            label="⬇️ Download Fleet Report (CSV)",
-            data=csv_data,
-            file_name=f"fleet_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
-        st.success("✅ Report generated! Click button above to download.")
+    # Export Report Button - Working CSV Download
+    import io
+    csv_buffer = io.StringIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_data = csv_buffer.getvalue()
     
-    # Email Alerts Button
-    if st.button("📧 Email Alerts", width="stretch"):
-        critical_vehicles = df[df['health_status'] == 'Critical']
-        high_risk_vehicles = df[df['health_status'] == 'High']
-        
-        st.warning(f"⚠️ **Alert Summary:**")
-        st.write(f"- 🔴 **Critical:** {len(critical_vehicles)} vehicles require immediate attention")
-        st.write(f"- 🟠 **High Risk:** {len(high_risk_vehicles)} vehicles need maintenance soon")
-        
-        if len(critical_vehicles) > 0:
-            st.error(f"**Critical Vehicles:** {', '.join(critical_vehicles['vehicle_id'].head(5).tolist())}")
-        
-        st.info("📧 Email alerts would be sent to: fleet-manager@company.com")
+    st.download_button(
+        label="� Download Fleet Report (CSV)",
+        data=csv_data,
+        file_name=f"fleet_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+        mime="text/csv",
+        use_container_width=True,
+        help="Download complete fleet data as CSV file"
+    )
     
-    # Refresh Data Button
-    if st.button("🔄 Refresh Data", width="stretch"):
+    # Refresh Data Button - Working
+    if st.button("🔄 Refresh Data", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
     
@@ -192,60 +227,8 @@ with st.sidebar:
     
     # Footer info
     st.caption("Last updated: " + datetime.now().strftime("%Y-%m-%d %H:%M"))
-    st.caption("Version 1.1 | © 2026 FleetAI")
+    st.caption("Version 1.3 | © 2026 FleetAI")
 
-# Load sample data
-@st.cache_data
-def load_data():
-    """Load sample fleet data"""
-    np.random.seed(42)
-    
-    # Generate sample vehicle data
-    n_vehicles = 500
-    vehicle_ids = [f"VEH-{str(i).zfill(3)}" for i in range(1, n_vehicles + 1)]
-    
-    data = {
-        'vehicle_id': vehicle_ids,
-        'vehicle_age_years': np.random.randint(1, 10, n_vehicles),
-        'total_mileage_km': np.random.randint(50000, 300000, n_vehicles),
-        'engine_temp_c': np.random.normal(85, 15, n_vehicles),
-        'oil_pressure_psi': np.random.normal(35, 8, n_vehicles),
-        'battery_voltage': np.random.normal(12.6, 0.8, n_vehicles),
-        'days_since_maintenance': np.random.randint(0, 90, n_vehicles),
-        'failure_risk_score': np.random.beta(2, 5, n_vehicles),
-        'latitude': np.random.uniform(28.4, 28.7, n_vehicles),
-        'longitude': np.random.uniform(77.0, 77.3, n_vehicles),
-    }
-    
-    df = pd.DataFrame(data)
-    
-    # Calculate maintenance prediction
-    df['will_require_maintenance'] = (df['failure_risk_score'] > 0.5).astype(int)
-    
-    # Add health status
-    def get_health_status(risk):
-        if risk > 0.8:
-            return 'Critical'
-        elif risk > 0.6:
-            return 'High'
-        elif risk > 0.4:
-            return 'Medium'
-        else:
-            return 'Low'
-    
-    df['health_status'] = df['failure_risk_score'].apply(get_health_status)
-    
-    # Add estimated cost
-    df['estimated_maintenance_cost'] = np.where(
-        df['will_require_maintenance'] == 1,
-        np.random.randint(500, 2000, n_vehicles),
-        0
-    )
-    
-    return df
-
-# Load data
-df = load_data()
 
 # Main content based on page selection
 if page == "🏠 Dashboard":
@@ -1014,5 +997,5 @@ elif page == "🎯 Live Demo":
 
 # Simple Footer
 st.markdown("---")
-st.caption("© 2026 FleetAI - Predictive Maintenance Platform | Version 1.2 | Built with Streamlit")
+st.caption("© 2026 FleetAI - Predictive Maintenance Platform | Version 1.3 | Built with Streamlit")
 
